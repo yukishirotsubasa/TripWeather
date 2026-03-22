@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useItinerary } from './store/ItineraryContext';
+import { ItineraryProvider, useItinerary } from './store/ItineraryContext';
 import WeatherChart from './components/WeatherChart';
 import WeatherTable from './components/WeatherTable';
 import WeatherSourceSelector from './components/WeatherSourceSelector';
