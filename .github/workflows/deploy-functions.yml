@@ -19,6 +19,7 @@ jobs:
       - name: Google Auth
         uses: google-github-actions/auth@v2
         with:
+          project_id: ${{ secrets.PROJECT_ID }}
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
