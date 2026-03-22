@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - 'functions/**' # Only deploy if functions code changes
+      - '.github/workflows/deploy-functions.yml'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
