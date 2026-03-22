@@ -79,12 +79,8 @@ export const useWeather = (items) => {
     setLoading(false);
   };
 
-  // Load whenever items change (especially on sharing mount)
-  useEffect(() => {
-    if (items && items.length > 0) {
-      fetchAll();
-    }
-  }, [items]); 
+  // Removed automatic update on items change. 
+  // Updates are now triggered manually or via initial load in App.jsx.
 
   return { data, tableData, loading, refresh: fetchAll };
 };

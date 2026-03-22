@@ -17,7 +17,7 @@ const WeatherTable = ({ items }) => {
           {items.map((item, idx) => (
             <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
               <td style={{ padding: '0.75rem' }}>{item.location}</td>
-              <td style={{ padding: '0.75rem' }}>{item.date}</td>
+              <td style={{ padding: '0.75rem' }}>{item.date} {item.time}</td>
               <td style={{ padding: '0.75rem' }}>{item.tempMax}°C</td>
               <td style={{ padding: '0.75rem' }}>{item.tempMin}°C</td>
               <td style={{ padding: '0.75rem' }}>{item.precip}%</td>

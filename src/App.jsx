@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ItineraryProvider, useItinerary } from './store/ItineraryContext';
 import WeatherChart from './components/WeatherChart';
 import WeatherTable from './components/WeatherTable';
@@ -10,6 +10,12 @@ const MainApp = () => {
   const { itinerary, trips, activeIndex, isPreview, setActiveIndex, addItem, removeItem, addTrip, deleteTrip, updateTrip, savePreview, shareUrl } = useItinerary();
   const [activeSource, setActiveSource] = useState('open-meteo');
   const { data, tableData, loading, refresh } = useWeather(itinerary.items);
+  
+  // Update weather on initial load or path change (for sharing)
+  useEffect(() => {
+    refresh();
+  }, [isPreview]);
+
 
   const handleAddLocation = (e) => {
     e.preventDefault();
@@ -108,7 +114,7 @@ const MainApp = () => {
             </div>
             <div style={{ flex: '0 1 100px' }}>
               <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>時間</label>
-              <input name="time" type="time" defaultValue="09:00" step="3600" required style={{ width: '100%' }} />
+              <input name="time" type="time" defaultValue="09:00" step="3600" required style={{ width: '100%' }} onKeyDown={(e) => e.preventDefault()} />
             </div>
             <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Plus size={18} /> 新增
@@ -144,7 +150,7 @@ const MainApp = () => {
                   <span style={{ fontSize: '0.75rem', fontWeight: 700, opacity: 0.5 }}>{item.time}</span>
                   <div>
                     <p style={{ fontWeight: 600 }}>{item.location}</p>
-                    <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{item.date}</p>
+                    <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{item.date} {item.time}</p>
                   </div>
                 </div>
                 <button onClick={() => removeItem(item.id)} style={{ background: 'transparent', opacity: 0.4 }} className="hover-red">
