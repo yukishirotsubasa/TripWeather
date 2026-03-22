@@ -21,11 +21,8 @@ export const useWeather = (items) => {
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (items.length === 0) return;
-
   const fetchAll = async () => {
-    if (items.length === 0) {
+    if (!items || items.length === 0) {
       setData([]);
       setTableData([]);
       return;
@@ -82,10 +79,12 @@ export const useWeather = (items) => {
     setLoading(false);
   };
 
-  // Initial load
+  // Load whenever items change (especially on sharing mount)
   useEffect(() => {
-    if (items.length > 0) fetchAll();
-  }, []); // Only once on mount
+    if (items && items.length > 0) {
+      fetchAll();
+    }
+  }, [items]); 
 
   return { data, tableData, loading, refresh: fetchAll };
 };

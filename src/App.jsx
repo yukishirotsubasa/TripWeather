@@ -7,12 +7,13 @@ import { useWeather } from './hooks/useWeather';
 import { Share2, Plus, Trash2, MapPin, Calendar } from 'lucide-react';
 
 const MainApp = () => {
-  const { itinerary, trips, activeIndex, setActiveIndex, addItem, removeItem, addTrip, deleteTrip, updateTrip, shareUrl } = useItinerary();
+  const { itinerary, trips, activeIndex, isPreview, setActiveIndex, addItem, removeItem, addTrip, deleteTrip, updateTrip, savePreview, shareUrl } = useItinerary();
   const [activeSource, setActiveSource] = useState('open-meteo');
   const { data, tableData, loading, refresh } = useWeather(itinerary.items);
 
   const handleAddLocation = (e) => {
     e.preventDefault();
+    if (isPreview) return;
     const form = e.target;
     addItem({ 
       location: form.location.value, 
@@ -33,70 +34,87 @@ const MainApp = () => {
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '1.5rem', width: '100%', display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-      {/* Sidebar - Trip Manager */}
-      <aside style={{ flex: '1 1 250px', maxWidth: '300px' }}>
-        <div className="glass card" style={{ padding: '1.25rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>我的行程</h3>
-            <button onClick={addTrip} style={{ padding: '0.4rem', borderRadius: '50%' }}><Plus size={16}/></button>
+      {/* Sidebar - Trip Manager (Hidden in preview) */}
+      {!isPreview && (
+        <aside style={{ flex: '1 1 250px', maxWidth: '300px' }}>
+          <div className="glass card" style={{ padding: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>我的行程</h3>
+              <button onClick={addTrip} style={{ padding: '0.4rem', borderRadius: '50%' }}><Plus size={16}/></button>
+            </div>
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              {trips.map((trip, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => setActiveIndex(idx)}
+                  className={idx === activeIndex ? 'trip-item-active' : ''}
+                  style={{ 
+                    padding: '0.75rem', borderRadius: '8px', cursor: 'pointer',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    marginBottom: '2px', transition: 'all 0.2s'
+                  }}
+                >
+                  <span style={{ fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{trip.title}</span>
+                  {trips.length > 1 && (
+                    <button onClick={(e) => { e.stopPropagation(); deleteTrip(idx); }} style={{ padding: '2px', background: 'transparent' }}>
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-          <div style={{ display: 'grid', gap: '0.5rem' }}>
-            {trips.map((trip, idx) => (
-              <div 
-                key={idx} 
-                onClick={() => setActiveIndex(idx)}
-                style={{ 
-                  padding: '0.75rem', borderRadius: '10px', cursor: 'pointer',
-                  border: `1px solid ${idx === activeIndex ? 'var(--primary)' : 'transparent'}`,
-                  background: idx === activeIndex ? 'rgba(99, 102, 241, 0.05)' : 'transparent',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                }}
-              >
-                <span style={{ fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{trip.title}</span>
-                {trips.length > 1 && (
-                  <button onClick={(e) => { e.stopPropagation(); deleteTrip(idx); }} style={{ padding: '2px', background: 'transparent' }}>
-                    <Trash2 size={12} />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </aside>
+        </aside>
+      )}
 
       {/* Main Content */}
       <main style={{ flex: '3 1 600px' }}>
+        {isPreview && (
+          <div className="glass" style={{ padding: '1rem', marginBottom: '2rem', background: 'rgba(99, 102, 241, 0.1)', border: '1px solid var(--primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontWeight: 600 }}>正在預覽分享的行程...</span>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={savePreview} style={{ background: 'var(--success)', fontSize: '0.875rem' }}>儲存至我的行程</button>
+              <button onClick={() => window.location.href = window.location.pathname} style={{ background: 'transparent', fontSize: '0.875rem', border: '1px solid var(--border)' }}>取消預覽</button>
+            </div>
+          </div>
+        )}
+
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
           <div>
             <input 
               value={itinerary.title} 
-              onChange={(e) => updateTrip({ title: e.target.value })}
-              style={{ fontSize: '1.75rem', fontWeight: '800', background: 'transparent', border: 'none', padding: 0 }}
+              onChange={(e) => !isPreview && updateTrip({ title: e.target.value })}
+              readOnly={isPreview}
+              style={{ fontSize: '1.75rem', fontWeight: '800', background: 'transparent', border: 'none', padding: 0, width: '100%' }}
             />
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>純前端旅遊氣象預報比對網</p>
           </div>
-          <button onClick={copyShareLink} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Share2 size={18} /> 分享
-          </button>
+          {!isPreview && (
+            <button onClick={copyShareLink} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Share2 size={18} /> 分享
+            </button>
+          )}
         </header>
 
-        <form onSubmit={handleAddLocation} className="glass card" style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div style={{ flex: '2 1 200px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>地點</label>
-            <input name="location" placeholder="行程景點..." required style={{ width: '100%' }} />
-          </div>
-          <div style={{ flex: '1 1 120px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>日期</label>
-            <input name="date" type="date" required style={{ width: '100%' }} />
-          </div>
-          <div style={{ flex: '0 1 100px' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>時間</label>
-            <input name="time" type="time" defaultValue="09:00" step="3600" required style={{ width: '100%' }} />
-          </div>
-          <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Plus size={18} /> 新增
-          </button>
-        </form>
+        {!isPreview && (
+          <form onSubmit={handleAddLocation} className="glass card" style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ flex: '2 1 200px' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>地點</label>
+              <input name="location" placeholder="行程景點..." required style={{ width: '100%' }} />
+            </div>
+            <div style={{ flex: '1 1 120px' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>日期</label>
+              <input name="date" type="date" required style={{ width: '100%' }} />
+            </div>
+            <div style={{ flex: '0 1 100px' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>時間</label>
+              <input name="time" type="time" defaultValue="09:00" step="3600" required style={{ width: '100%' }} />
+            </div>
+            <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Plus size={18} /> 新增
+            </button>
+          </form>
+        )}
 
         {itinerary.items.length > 0 && (
           <section className="animate-fade">
@@ -137,10 +155,7 @@ const MainApp = () => {
           </div>
         </div>
       </main>
-    </div>
-  );
-};
-      
+
       <style>{`
         .hover-red:hover { color: var(--accent) !important; }
       `}</style>

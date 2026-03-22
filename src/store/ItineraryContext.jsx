@@ -20,17 +20,22 @@ export const ItineraryProvider = ({ children }) => {
     };
   });
 
-  // Share URL loading (overrides local storage if present)
+  const [previewTrip, setPreviewTrip] = useState(null);
+
+  // Helper for default name
+  const getDefaultName = () => {
+    const now = new Date();
+    return `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  // Share URL loading
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const q = params.get('q');
     if (q) {
       const data = decompressData(q);
       if (data) {
-        setState(prev => ({
-          trips: [...prev.trips, { ...data, title: `分享的行程 ${new Date().toLocaleDateString()}` }],
-          activeIndex: prev.trips.length
-        }));
+        setPreviewTrip({ ...data, title: '預覽分享的行程' });
       }
     }
   }, []);
@@ -40,10 +45,11 @@ export const ItineraryProvider = ({ children }) => {
     localStorage.setItem('tripweather_data', JSON.stringify(state));
   }, [state]);
 
-  const activeTrip = state.trips[state.activeIndex] || state.trips[0];
+  const activeTrip = previewTrip || state.trips[state.activeIndex] || state.trips[0];
 
   const addItem = (item) => {
-    if (activeTrip.items.length >= 20) return; // Up limit
+    if (previewTrip) return; // Cannot edit in preview
+    if (activeTrip.items.length >= 20) return;
     const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9);
     
     const newTrips = [...state.trips];
@@ -56,6 +62,23 @@ export const ItineraryProvider = ({ children }) => {
     setState(prev => ({ ...prev, trips: newTrips }));
   };
 
+  const addTrip = () => {
+    setState(prev => ({
+      trips: [...prev.trips, { title: getDefaultName(), items: [] }],
+      activeIndex: prev.trips.length
+    }));
+  };
+
+  const savePreview = () => {
+    if (!previewTrip) return;
+    setState(prev => ({
+      trips: [...prev.trips, { title: getDefaultName(), items: previewTrip.items }],
+      activeIndex: prev.trips.length
+    }));
+    setPreviewTrip(null);
+    window.history.replaceState({}, '', window.location.pathname);
+  };
+
   const removeItem = (id) => {
     const newTrips = [...state.trips];
     newTrips[state.activeIndex] = {
@@ -63,13 +86,6 @@ export const ItineraryProvider = ({ children }) => {
       items: activeTrip.items.filter(i => i.id !== id)
     };
     setState(prev => ({ ...prev, trips: newTrips }));
-  };
-
-  const addTrip = () => {
-    setState(prev => ({
-      trips: [...prev.trips, { title: `未命名行程 ${prev.trips.length + 1}`, items: [] }],
-      activeIndex: prev.trips.length
-    }));
   };
 
   const deleteTrip = (index) => {
@@ -88,7 +104,8 @@ export const ItineraryProvider = ({ children }) => {
   };
 
   const shareUrl = () => {
-    const q = compressData(activeTrip);
+    // Only share items, not the user's custom title
+    const q = compressData({ items: activeTrip.items });
     if (!q) return null;
     return `${window.location.origin}${window.location.pathname}?q=${q}`;
   };
@@ -98,11 +115,13 @@ export const ItineraryProvider = ({ children }) => {
       itinerary: activeTrip, 
       trips: state.trips,
       activeIndex: state.activeIndex,
-      setActiveIndex: (index) => setState(prev => ({ ...prev, activeIndex: index })),
+      isPreview: !!previewTrip,
+      setActiveIndex: (index) => { setPreviewTrip(null); setState(prev => ({ ...prev, activeIndex: index })); },
       addItem, 
       removeItem, 
       addTrip,
       deleteTrip,
+      savePreview,
       updateTrip, 
       shareUrl 
     }}>
