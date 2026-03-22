@@ -22,7 +22,7 @@ exports.weatherProxy = async (req, res) => {
     if (source === 'weatherapi') {
       // Fetch key from Secret Manager
       const [version] = await client.accessSecretVersion({
-        name: 'projects/YOUR_PROJECT_ID/secrets/WEATHER_API_KEY/versions/latest',
+        name: 'projects/tripplanner-490708/secrets/weatherapi/versions/latest',
       });
       const apiKey = version.payload.data.toString();
       

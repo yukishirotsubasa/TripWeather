@@ -1,0 +1,34 @@
+name: Deploy Cloud Functions
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - 'functions/**' # Only deploy if functions code changes
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Deploy Cloud Function
+        uses: google-github-actions/deploy-cloud-functions@v2
+        with:
+          name: weatherProxy
+          runtime: nodejs20
+          region: asia-east1 # Update as needed
+          source_dir: ./functions
+          entry_point: weatherProxy
+          https_trigger_security_level: secure_always
+          max_instances: 10
