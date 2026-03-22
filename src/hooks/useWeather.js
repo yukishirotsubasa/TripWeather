@@ -26,40 +26,36 @@ export const useWeather = (items) => {
 
     const fetchAll = async () => {
       setLoading(true);
-      const sources = [
-        { id: 'open-meteo', label: 'Open-Meteo', fetcher: fetchOpenMeteo },
-        { id: 'weatherapi', label: 'WeatherAPI', fetcher: fetchWeatherAPIMock }
-      ];
-
       const newChartData = [];
       const newTableData = [];
 
-      for (const source of sources) {
-        let sourceSeries = { name: source.label, id: source.id, data: [] };
+      try {
+        const sourceSeries = { name: 'Open-Meteo', id: 'open-meteo', data: [] };
         
         for (const item of items) {
-          const res = await source.fetcher(item.lat, item.lng, item.date, item.date);
-          if (res) {
-            // Chart Data (Hourly)
-            if (res.hourly) {
-              res.hourly.time.forEach((t, i) => {
-                sourceSeries.data.push({ x: new Date(t).getTime(), y: res.hourly.temperature_2m[i] });
+          const res = await fetchOpenMeteo(item.lat, item.lng, item.date, item.date);
+          if (res && res.hourly) {
+            // Merge hourly data
+            res.hourly.time.forEach((t, i) => {
+              sourceSeries.data.push({ 
+                x: new Date(t).getTime(), 
+                y: res.hourly.temperature_2m[i] 
               });
-            }
+            });
 
-            // Table Data (Source 1 as primary for table)
-            if (source.id === 'open-meteo') {
-               newTableData.push({
-                 location: item.location,
-                 date: item.date,
-                 tempMax: res.daily.temperature_2m_max[0],
-                 tempMin: res.daily.temperature_2m_min[0],
-                 precip: res.daily.precipitation_probability_max[0]
-               });
-            }
+            // Table Summary (First available daily data for each item)
+            newTableData.push({
+              location: item.location,
+              date: item.date,
+              tempMax: res.daily.temperature_2m_max[0],
+              tempMin: res.daily.temperature_2m_min[0],
+              precip: res.daily.precipitation_probability_max[0]
+            });
           }
         }
         newChartData.push(sourceSeries);
+      } catch (err) {
+        console.error('Weather sync failed:', err);
       }
 
       setData(newChartData);

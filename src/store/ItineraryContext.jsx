@@ -22,9 +22,10 @@ export const ItineraryProvider = ({ children }) => {
 
   const addItem = (item) => {
     if (itinerary.items.length >= 10) return;
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9);
     setItinerary(prev => ({
       ...prev,
-      items: [...prev.items, { ...item, id: crypto.randomUUID() }]
+      items: [...prev.items, { ...item, id }]
     }));
   };
 
