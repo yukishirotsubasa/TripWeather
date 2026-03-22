@@ -9,6 +9,10 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: 'read'
+  id-token: 'write'  # 這行最重要，用來換取 GCP 的 Token
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
