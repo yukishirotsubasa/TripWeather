@@ -17,16 +17,11 @@ export const compressData = (data) => {
   }
 };
 
-/**
- * Decompresses a URL-safe Base64 string back to an object.
- */
-export const decompressData = (base64) => {
+export const decompressData = (encoded) => {
+  if (!encoded) return null;
   try {
-    const decoded = decode(base64);
-    const binaryString = window.atob(decoded);
-    const charData = binaryString.split('').map(x => x.charCodeAt(0));
-    const binData = new Uint8Array(charData);
-    const decompressed = pako.inflate(binData, { to: 'string' });
+    const compressed = toUint8Array(encoded);
+    const decompressed = pako.inflate(compressed, { to: 'string' });
     return JSON.parse(decompressed);
   } catch (err) {
     console.error('Decompression failed:', err);

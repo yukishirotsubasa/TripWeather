@@ -24,47 +24,68 @@ export const useWeather = (items) => {
   useEffect(() => {
     if (items.length === 0) return;
 
-    const fetchAll = async () => {
-      setLoading(true);
-      const newChartData = [];
-      const newTableData = [];
+  const fetchAll = async () => {
+    if (items.length === 0) {
+      setData([]);
+      setTableData([]);
+      return;
+    }
+    
+    setLoading(true);
+    const newChartData = [];
+    const newTableData = [];
 
-      try {
-        const sourceSeries = { name: 'Open-Meteo', id: 'open-meteo', data: [] };
+    try {
+      const sourceSeries = { name: 'Open-Meteo', id: 'open-meteo', data: [] };
+      
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const nextItem = items[i + 1];
         
-        for (const item of items) {
-          const res = await fetchOpenMeteo(item.lat, item.lng, item.date, item.date);
-          if (res && res.hourly) {
-            // Merge hourly data
-            res.hourly.time.forEach((t, i) => {
+        const res = await fetchOpenMeteo(item.lat, item.lng, item.date, item.date);
+        if (res && res.hourly) {
+          const startTime = new Date(`${item.date} ${item.time || '00:00'}`).getTime();
+          const endTime = nextItem 
+            ? new Date(`${nextItem.date} ${nextItem.time || '00:00'}`).getTime()
+            : new Date(`${item.date} 23:59:59`).getTime();
+
+          // Merge hourly data within interval
+          res.hourly.time.forEach((t, idx) => {
+            const timeVal = new Date(t).getTime();
+            if (timeVal >= startTime && timeVal < endTime) {
               sourceSeries.data.push({ 
-                x: new Date(t).getTime(), 
-                y: res.hourly.temperature_2m[i] 
+                x: timeVal, 
+                y: res.hourly.temperature_2m[idx] 
               });
-            });
+            }
+          });
 
-            // Table Summary (First available daily data for each item)
-            newTableData.push({
-              location: item.location,
-              date: item.date,
-              tempMax: res.daily.temperature_2m_max[0],
-              tempMin: res.daily.temperature_2m_min[0],
-              precip: res.daily.precipitation_probability_max[0]
-            });
-          }
+          // Table summary per location
+          newTableData.push({
+            id: item.id,
+            location: item.location,
+            date: item.date,
+            time: item.time,
+            tempMax: res.daily.temperature_2m_max[0],
+            tempMin: res.daily.temperature_2m_min[0],
+            precip: res.daily.precipitation_probability_max[0]
+          });
         }
-        newChartData.push(sourceSeries);
-      } catch (err) {
-        console.error('Weather sync failed:', err);
       }
+      newChartData.push(sourceSeries);
+    } catch (err) {
+      console.error('Weather sync failed:', err);
+    }
 
-      setData(newChartData);
-      setTableData(newTableData);
-      setLoading(false);
-    };
+    setData(newChartData);
+    setTableData(newTableData);
+    setLoading(false);
+  };
 
-    fetchAll();
-  }, [items]);
+  // Initial load
+  useEffect(() => {
+    if (items.length > 0) fetchAll();
+  }, []); // Only once on mount
 
-  return { data, tableData, loading };
+  return { data, tableData, loading, refresh: fetchAll };
 };
