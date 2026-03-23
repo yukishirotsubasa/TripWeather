@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { fetchOpenMeteo } from '../api/openMeteo';
 import { fetchWeatherAPI } from '../api/weatherApi';
 import { fetchMeteoblue } from '../api/meteoblue';
