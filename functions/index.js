@@ -128,7 +128,7 @@ exports.weatherProxy = async (req, res) => {
         name: 'projects/tripplanner-490708/secrets/meteoblue/versions/latest',
       });
       const apiKey = version.payload.data.toString();
-      const url = `https://my.meteoblue.com/packages/basic-1h_basic-day?lat=${lat}&lon=${lng}&apikey=${apiKey}&asjson=true`;
+      const url = `https://my.meteoblue.com/packages/basic-1h_basic-day?lat=${lat}&lon=${lng}&apikey=${apiKey}&asjson=true&forecast_days=7`;
       const response = await fetch(url);
       const data = await response.json();
       if (data.error_message) {

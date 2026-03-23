@@ -26,10 +26,42 @@ export const useWeather = (items) => {
     const newTableData = [];
 
     try {
-      // Loop through each location in the itinerary
+      // 1. 預先計算區域與不重複的請求
+      // 將座標四捨五入到小數點後 1 位 (約 11km)，減少冗餘請求
+      const getRegionKey = (lat, lng) => `${parseFloat(lat).toFixed(1)}_${parseFloat(lng).toFixed(1)}`;
+      
+      const regionDataMap = {}; // { [sourceId]: { [regionKey]: data } }
+      SOURCES.forEach(s => regionDataMap[s.id] = {});
+
+      // 2. 收集所有不重複的「區域」
+      const regions = [...new Set(items.map(item => getRegionKey(item.lat, item.lng)))];
+
+      // 3. 遍歷每個區域發送請求
+      for (const regionKey of regions) {
+        const representativeItem = items.find(item => getRegionKey(item.lat, item.lng) === regionKey);
+        const { lat, lng, date } = representativeItem;
+
+        await Promise.all(SOURCES.map(async (source) => {
+          // Date guard for Meteoblue (Limit: 7 days)
+          if (source.id === 'meteoblue') {
+            const today = new Date();
+            const targetDate = new Date(date);
+            const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+            if (diffDays > 7) return; 
+          }
+
+          const res = await source.fetcher(lat, lng, date);
+          if (res) {
+            regionDataMap[source.id][regionKey] = res;
+          }
+        }));
+      }
+
+      // 4. 將抓到的區域資料對應回每個景點
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const nextItem = items[i + 1];
+        const regionKey = getRegionKey(item.lat, item.lng);
         
         const startTime = new Date(`${item.date} ${item.time || '00:00'}`).getTime();
         const endTime = nextItem 
@@ -38,48 +70,31 @@ export const useWeather = (items) => {
 
         const locationWeather = { id: item.id, location: item.location, date: item.date, time: item.time, sources: {} };
 
-        // Fetch from all sources for comparison
-        await Promise.all(SOURCES.map(async (source, sourceIdx) => {
-          // Date guard for Meteoblue (Limit: 7 days)
-          if (source.id === 'meteoblue') {
-            const today = new Date();
-            const targetDate = new Date(item.date);
-            const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-            if (diffDays > 7) {
-              return; // Skip Meteoblue for distant dates
-            }
-          }
-
-          const res = await source.fetcher(item.lat, item.lng, item.date);
-          
+        SOURCES.forEach((source, sourceIdx) => {
+          const res = regionDataMap[source.id][regionKey];
           if (res && res.hourly) {
-            // Add hourly data to chart series
+            // 過濾出屬於該景點時段的每小時數據
             res.hourly.time.forEach((t, idx) => {
               const timeVal = new Date(t).getTime();
               if (timeVal >= startTime && timeVal < endTime) {
                 newChartData[sourceIdx].data.push({ 
-                  x: timeVal, 
-                  y: res.hourly.temperature[idx] 
+                   x: timeVal, 
+                   y: res.hourly.temperature[idx] 
                 });
               }
             });
 
-            // Store summary for table (we'll use the primary source or first available for the main table view)
             locationWeather.sources[source.id] = {
               tempMax: res.daily.tempMax,
               tempMin: res.daily.tempMin,
               precip: res.daily.precipProb
             };
           }
-        }));
+        });
 
-        // Use 'open-meteo' as default for table display if available, else first source
         const primarySource = locationWeather.sources['open-meteo'] || Object.values(locationWeather.sources)[0];
         if (primarySource) {
-          newTableData.push({
-            ...item,
-            ...primarySource
-          });
+          newTableData.push({ ...item, ...primarySource });
         }
       }
     } catch (err) {
