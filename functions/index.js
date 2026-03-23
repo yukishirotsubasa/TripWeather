@@ -41,8 +41,18 @@ function normalizeWeatherAPI(data) {
  * Hides API Keys from the frontend and normalizes output
  */
 exports.weatherProxy = async (req, res) => {
-  // CORS Headers
-  res.set('Access-Control-Allow-Origin', '*');
+  const allowedOrigins = [
+    'https://yukishirotsubasa.github.io'
+  ];
+  const origin = req.headers.origin;
+
+  if (allowedOrigins.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+  } else {
+    // Default or public (if you want to allow it temporarily for testing)
+    // res.set('Access-Control-Allow-Origin', '*'); 
+  }
+
   if (req.method === 'OPTIONS') {
     res.set('Access-Control-Allow-Methods', 'GET');
     res.set('Access-Control-Allow-Headers', 'Content-Type');
