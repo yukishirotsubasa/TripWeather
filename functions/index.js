@@ -1,4 +1,10 @@
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin (uses default credentials)
+admin.initializeApp();
+const db = admin.firestore();
+
 const client = new SecretManagerServiceClient();
 
 // Helper to normalize Open-Meteo response
@@ -124,16 +130,48 @@ exports.weatherProxy = async (req, res) => {
       const data = await response.json();
       res.status(200).json(normalizeOpenMeteo(data));
     } else if (source === 'meteoblue') {
+      const cacheKey = `mb_${parseFloat(lat).toFixed(2)}_${parseFloat(lng).toFixed(2)}`;
+      const cacheRef = db.collection('weather_cache').doc(cacheKey);
+      
+      // 1. Try Cache
+      try {
+        const doc = await cacheRef.get();
+        if (doc.exists) {
+          const cacheData = doc.data();
+          const ageHours = (Date.now() - cacheData.updatedAt) / (1000 * 60 * 60);
+          if (ageHours < 3) {
+            console.log(`[Cache Hit] ${cacheKey} (Age: ${ageHours.toFixed(1)}h)`);
+            res.status(200).json(normalizeMeteoblue(cacheData.raw));
+            return;
+          }
+        }
+      } catch (cacheErr) {
+        console.error('Firestore cache read error:', cacheErr);
+      }
+
+      // 2. Cache Miss: Fetch API
       const [version] = await client.accessSecretVersion({
         name: 'projects/tripplanner-490708/secrets/meteoblue/versions/latest',
       });
       const apiKey = version.payload.data.toString();
       const url = `https://my.meteoblue.com/packages/basic-1h_basic-day?lat=${lat}&lon=${lng}&apikey=${apiKey}&asjson=true&forecast_days=7`;
+      
       const response = await fetch(url);
       const data = await response.json();
       if (data.error_message) {
         throw new Error(`Meteoblue API Error: ${data.error_message}`);
       }
+
+      // 3. Save to Cache
+      try {
+        await cacheRef.set({
+          raw: data,
+          updatedAt: Date.now()
+        });
+      } catch (saveErr) {
+        console.error('Firestore cache save error:', saveErr);
+      }
+
       res.status(200).json(normalizeMeteoblue(data));
     } else {
       res.status(400).json({ error: 'Unsupported source' });
