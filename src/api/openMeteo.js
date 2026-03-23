@@ -8,6 +8,12 @@ export const fetchOpenMeteo = async (lat, lng, date) => {
   
   try {
     const response = await fetch(url);
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('API 返回了非 JSON 格式的內容:', text.slice(0, 100));
+      throw new Error(`Cloud Function 傳回了錯誤格式`);
+    }
     if (!response.ok) throw new Error('Open-Meteo Proxy 請求失敗');
     return await response.json();
   } catch (err) {
