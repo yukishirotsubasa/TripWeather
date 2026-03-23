@@ -1,10 +1,11 @@
-import { useState } from 'react';
 import { fetchOpenMeteo } from '../api/openMeteo';
 import { fetchWeatherAPI } from '../api/weatherApi';
+import { fetchMeteoblue } from '../api/meteoblue';
 
 const SOURCES = [
   { id: 'open-meteo', name: 'Open-Meteo', fetcher: fetchOpenMeteo },
-  { id: 'weatherapi', name: 'WeatherAPI', fetcher: fetchWeatherAPI }
+  { id: 'weatherapi', name: 'WeatherAPI', fetcher: fetchWeatherAPI },
+  { id: 'meteoblue', name: 'Meteoblue', fetcher: fetchMeteoblue }
 ];
 
 export const useWeather = (items) => {

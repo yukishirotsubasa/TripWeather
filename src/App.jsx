@@ -139,7 +139,8 @@ const MainApp = () => {
             <WeatherSourceSelector 
               sources={[
                 { id: 'open-meteo', label: 'Open-Meteo' },
-                { id: 'weatherapi', label: 'WeatherAPI' }
+                { id: 'weatherapi', label: 'WeatherAPI' },
+                { id: 'meteoblue', label: 'Meteoblue' }
               ]} 
               activeSource={activeSource} 
               onSelect={setActiveSource} 

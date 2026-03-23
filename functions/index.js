@@ -36,6 +36,25 @@ function normalizeWeatherAPI(data) {
   };
 }
 
+// Helper to normalize Meteoblue response
+function normalizeMeteoblue(data) {
+  const day = data.data_day;
+  const hour = data.data_1h;
+  return {
+    source: 'meteoblue',
+    daily: {
+      tempMax: day.tempmax[0],
+      tempMin: day.tempmin[0],
+      precipProb: day.precipitation_probability[0]
+    },
+    hourly: {
+      time: hour.time.map(t => t.replace(' ', 'T')), // Format as ISO
+      temperature: hour.temp,
+      precipitation: hour.precipitation_probability
+    }
+  };
+}
+
 /**
  * Cloud Function to Proxy Weather API Requests
  * Hides API Keys from the frontend and normalizes output
@@ -78,6 +97,15 @@ exports.weatherProxy = async (req, res) => {
       const response = await fetch(url);
       const data = await response.json();
       res.status(200).json(normalizeOpenMeteo(data));
+    } else if (source === 'meteoblue') {
+      const [version] = await client.accessSecretVersion({
+        name: 'projects/tripplanner-490708/secrets/meteoblue/versions/latest',
+      });
+      const apiKey = version.payload.data.toString();
+      const url = `https://my.meteoblue.com/packages/basic-1h_basic-day?lat=${lat}&lon=${lng}&apikey=${apiKey}&asjson=true`;
+      const response = await fetch(url);
+      const data = await response.json();
+      res.status(200).json(normalizeMeteoblue(data));
     } else {
       res.status(400).send('Unsupported source');
     }
