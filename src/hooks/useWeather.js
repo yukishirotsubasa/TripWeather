@@ -40,8 +40,17 @@ export const useWeather = (items) => {
 
         // Fetch from all sources for comparison
         await Promise.all(SOURCES.map(async (source, sourceIdx) => {
+          // Date guard for Meteoblue (Limit: 7 days)
+          if (source.id === 'meteoblue') {
+            const today = new Date();
+            const targetDate = new Date(item.date);
+            const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+            if (diffDays > 7) {
+              return; // Skip Meteoblue for distant dates
+            }
+          }
+
           const res = await source.fetcher(item.lat, item.lng, item.date);
-          console.log(`[Weather Debug] Source: ${source.id}, Received data:`, res);
           
           if (res && res.hourly) {
             // Add hourly data to chart series
