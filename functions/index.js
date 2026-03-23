@@ -38,6 +38,9 @@ function normalizeWeatherAPI(data) {
 
 // Helper to normalize Meteoblue response
 function normalizeMeteoblue(data) {
+  if (!data || !data.data_day || !data.data_1h) {
+    throw new Error('Meteoblue API 回傳數據不完整或包含錯誤: ' + JSON.stringify(data));
+  }
   const day = data.data_day;
   const hour = data.data_1h;
   return {
@@ -105,12 +108,19 @@ exports.weatherProxy = async (req, res) => {
       const url = `https://my.meteoblue.com/packages/basic-1h_basic-day?lat=${lat}&lon=${lng}&apikey=${apiKey}&asjson=true`;
       const response = await fetch(url);
       const data = await response.json();
+      if (data.error_message) {
+        throw new Error(`Meteoblue API Error: ${data.error_message}`);
+      }
       res.status(200).json(normalizeMeteoblue(data));
     } else {
-      res.status(400).send('Unsupported source');
+      res.status(400).json({ error: 'Unsupported source' });
     }
   } catch (err) {
     console.error(err);
-    res.status(500).send('Internal Server Error');
+    res.status(500).json({ 
+      error: 'Internal Server Error', 
+      message: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+    });
   }
 };
