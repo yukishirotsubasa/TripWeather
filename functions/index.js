@@ -39,21 +39,26 @@ function normalizeWeatherAPI(data) {
 // Helper to normalize Meteoblue response
 function normalizeMeteoblue(data) {
   if (!data || !data.data_day || !data.data_1h) {
-    throw new Error('Meteoblue API 回傳數據不完整或包含錯誤: ' + JSON.stringify(data));
+    console.error('Meteoblue 原始資料格式不符:', JSON.stringify(data).slice(0, 500));
+    throw new Error('Meteoblue API 回傳數據結構不完整');
   }
   const day = data.data_day;
   const hour = data.data_1h;
+
+  // 安全地獲取數組的第一個元素
+  const getVal = (arr, key) => (arr && Array.isArray(arr[key]) ? arr[key][0] : (arr ? arr[key] : undefined));
+
   return {
     source: 'meteoblue',
     daily: {
-      tempMax: day.tempmax[0],
-      tempMin: day.tempmin[0],
-      precipProb: day.precipitation_probability[0]
+      tempMax: getVal(day, 'tempmax'),
+      tempMin: getVal(day, 'tempmin'),
+      precipProb: getVal(day, 'precipitation_probability')
     },
     hourly: {
-      time: hour.time.map(t => t.replace(' ', 'T')), // Format as ISO
-      temperature: hour.temp,
-      precipitation: hour.precipitation_probability
+      time: (hour.time || []).map(t => typeof t === 'string' ? t.replace(' ', 'T') : t),
+      temperature: hour.temp || [],
+      precipitation: hour.precipitation_probability || []
     }
   };
 }
