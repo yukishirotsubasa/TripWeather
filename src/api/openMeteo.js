@@ -1,15 +1,15 @@
+const FUNCTION_URL = import.meta.env.VITE_GCP_FUNCTION_URL;
+
 /**
- * Fetch weather from Open-Meteo
- * Handles both hourly and daily data
+ * 從 Cloud Function Proxy 獲取 Open-Meteo 數據 (標準化)
  */
-export const fetchOpenMeteo = async (lat, lng, startDate, endDate) => {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&start_date=${startDate}&end_date=${endDate}&hourly=temperature_2m,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`;
+export const fetchOpenMeteo = async (lat, lng, date) => {
+  const url = `${FUNCTION_URL}?source=open-meteo&lat=${lat}&lng=${lng}&date=${date}`;
   
   try {
     const response = await fetch(url);
-    if (!response.ok) throw new Error('Open-Meteo request failed');
-    const data = await response.json();
-    return data;
+    if (!response.ok) throw new Error('Open-Meteo Proxy 請求失敗');
+    return await response.json();
   } catch (err) {
     console.error(err);
     return null;

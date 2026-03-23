@@ -16,7 +16,7 @@ const WeatherChart = ({ data, activeSource }) => {
   const options = {
     chart: { type: 'line', toolbar: { show: false }, background: 'transparent', zoom: { enabled: false } },
     theme: { mode: 'dark' },
-    stroke: { curve: 'smooth', width: data.map(s => s.name === activeSource ? 4 : 1.5) },
+    stroke: { curve: 'smooth', width: data.map(s => s.id === activeSource ? 5 : 2) },
     xaxis: { 
       type: 'datetime',
       labels: { datetimeUTC: false, format: 'MM/dd HH:mm' }

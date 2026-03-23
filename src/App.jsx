@@ -136,6 +136,14 @@ const MainApp = () => {
                 </button>
               </div>
             </div>
+            <WeatherSourceSelector 
+              sources={[
+                { id: 'open-meteo', label: 'Open-Meteo' },
+                { id: 'weatherapi', label: 'WeatherAPI' }
+              ]} 
+              activeSource={activeSource} 
+              onSelect={setActiveSource} 
+            />
             <WeatherChart data={data} activeSource={activeSource} />
             <WeatherTable items={tableData} />
           </section>
