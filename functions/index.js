@@ -40,25 +40,43 @@ function normalizeWeatherAPI(data) {
 function normalizeMeteoblue(data) {
   if (!data || !data.data_day || !data.data_1h) {
     console.error('Meteoblue 原始資料格式不符:', JSON.stringify(data).slice(0, 500));
-    throw new Error('Meteoblue API 回傳數據結構不完整');
+    throw new Error('Meteoblue API 回傳數據結構不完整 (缺少 data_day 或 data_1h)');
   }
   const day = data.data_day;
   const hour = data.data_1h;
 
-  // 安全地獲取數組的第一個元素
-  const getVal = (arr, key) => (arr && Array.isArray(arr[key]) ? arr[key][0] : (arr ? arr[key] : undefined));
+  // 安全地獲取多種可能的欄位名
+  const findVal = (obj, keys) => {
+    for (const key of keys) {
+      if (obj[key] !== undefined) return obj[key];
+    }
+    return undefined;
+  };
+
+  const getFirst = (obj, keys) => {
+    const val = findVal(obj, keys);
+    return Array.isArray(val) ? val[0] : val;
+  };
+
+  const tempMax = getFirst(day, ['tempmax', 'temperature_max', 'temp_max', 'temperature_2m_max']);
+  const tempMin = getFirst(day, ['tempmin', 'temperature_min', 'temp_min', 'temperature_2m_min']);
+  const precipProb = getFirst(day, ['precipitation_probability', 'precip_prob', 'precipitation_probability_max']);
+
+  const hourlyTime = findVal(hour, ['time']) || [];
+  const hourlyTemp = findVal(hour, ['temp', 'temperature', 'temperature_2m', 'temp_c']) || [];
+  const hourlyPrecip = findVal(hour, ['precipitation_probability', 'precip_prob', 'chance_of_rain']) || [];
 
   return {
     source: 'meteoblue',
     daily: {
-      tempMax: getVal(day, 'tempmax'),
-      tempMin: getVal(day, 'tempmin'),
-      precipProb: getVal(day, 'precipitation_probability')
+      tempMax: tempMax,
+      tempMin: tempMin,
+      precipProb: precipProb
     },
     hourly: {
-      time: (hour.time || []).map(t => typeof t === 'string' ? t.replace(' ', 'T') : t),
-      temperature: hour.temp || [],
-      precipitation: hour.precipitation_probability || []
+      time: hourlyTime.map(t => typeof t === 'string' ? t.replace(' ', 'T') : t),
+      temperature: hourlyTemp,
+      precipitation: hourlyPrecip
     }
   };
 }

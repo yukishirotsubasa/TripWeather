@@ -41,6 +41,7 @@ export const useWeather = (items) => {
         // Fetch from all sources for comparison
         await Promise.all(SOURCES.map(async (source, sourceIdx) => {
           const res = await source.fetcher(item.lat, item.lng, item.date);
+          console.log(`[Weather Debug] Source: ${source.id}, Received data:`, res);
           
           if (res && res.hourly) {
             // Add hourly data to chart series
