@@ -6,6 +6,7 @@ admin.initializeApp();
 const db = admin.firestore();
 
 const client = new SecretManagerServiceClient();
+const fetch = require('node-fetch');
 
 // Helper to normalize Open-Meteo response
 function normalizeOpenMeteo(data) {
