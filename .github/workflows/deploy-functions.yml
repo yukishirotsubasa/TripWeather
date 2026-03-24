@@ -28,17 +28,20 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Deploy Cloud Function
-        uses: google-github-actions/deploy-cloud-functions@v2
-        with:
-          name: weatherProxy
-          runtime: nodejs20
-          region: us-central1 # Update as needed
-          source_dir: ./functions
-          entry_point: weatherProxy
-          ingress_settings: ALLOW_ALL
-          https_trigger_security_level: secure_always
-          max_instances: 1
-          service_account_email: ${{ secrets.FUNCTION_BUILD_SERVICE_ACCOUNT }}
-          timeout: 300
-          env_vars: DEPLOYED_VIA=github-actions
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Force Deploy Gen2
+        run: |
+          gcloud functions deploy weatherProxy \
+            --gen2 \
+            --runtime=nodejs20 \
+            --region=us-central1 \
+            --source=./functions \
+            --entry-point=weatherProxy \
+            --trigger-http \
+            --allow-unauthenticated \
+            --service-account=${{ secrets.FUNCTION_BUILD_SERVICE_ACCOUNT }} \
+            --max-instances=1 \
+            --timeout=300 \
+            --set-env-vars=DEPLOYED_VIA=github-actions
