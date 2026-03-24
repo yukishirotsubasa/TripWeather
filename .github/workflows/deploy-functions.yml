@@ -34,13 +34,12 @@ jobs:
           name: weatherProxy
           runtime: nodejs20
           region: us-central1 # Update as needed
-          gen2: true
+          environment: 'gen2'
           source_dir: ./functions
           entry_point: weatherProxy
           ingress_settings: ALLOW_ALL
           https_trigger_security_level: secure_always
           max_instances: 1
-          service_account: ${{ secrets.FUNCTION_BUILD_SERVICE_ACCOUNT }}
+          service_account_email: ${{ secrets.FUNCTION_BUILD_SERVICE_ACCOUNT }}
           timeout: 300
-          flags: '--gen2 --trigger-http'
           env_vars: DEPLOYED_VIA=github-actions
