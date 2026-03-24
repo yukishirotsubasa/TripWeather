@@ -36,6 +36,6 @@ jobs:
           region: us-central1 # Update as needed
           environment: GEN_2
           source_dir: ./functions
-          entry_point: weatherProxy
+          entry_point: weatherProxy2
           https_trigger_security_level: secure_always
           max_instances: 1
