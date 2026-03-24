@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Cloud Function to proxy weather requests",
   "main": "index.js",
+  "scripts": {
+    "start": "functions-framework --target=weatherProxy"
+  },
   "dependencies": {
     "@google-cloud/secret-manager": "^5.0.0",
     "@google-cloud/firestore": "^7.0.0",
