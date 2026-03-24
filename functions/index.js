@@ -103,10 +103,12 @@ exports.weatherProxy = async (req, res) => {
     // Default or public (if you want to allow it temporarily for testing)
     // res.set('Access-Control-Allow-Origin', '*'); 
   }
+  res.set('Vary', 'Origin');
 
+  res.set('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Methods', 'GET');
-    res.set('Access-Control-Allow-Headers', 'Content-Type');
     res.set('Access-Control-Max-Age', '3600');
     res.status(204).send('');
     return;
