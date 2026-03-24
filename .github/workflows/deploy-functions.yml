@@ -34,7 +34,7 @@ jobs:
           name: weatherProxy2
           runtime: nodejs20
           region: us-central1 # Update as needed
-          environment: GEN_2
+          gen2: true
           source_dir: ./functions
           entry_point: weatherProxy2
           https_trigger_security_level: secure_always
