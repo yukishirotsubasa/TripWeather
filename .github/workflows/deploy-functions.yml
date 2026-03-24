@@ -34,7 +34,6 @@ jobs:
           name: weatherProxy
           runtime: nodejs20
           region: us-central1 # Update as needed
-          environment: 'GEN_2'
           source_dir: ./functions
           entry_point: weatherProxy
           ingress_settings: ALLOW_ALL
