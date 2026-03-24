@@ -39,3 +39,4 @@ jobs:
           entry_point: weatherProxy
           https_trigger_security_level: secure_always
           max_instances: 1
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
