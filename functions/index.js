@@ -95,7 +95,7 @@ exports.weatherProxy = async (req, res) => {
   const allowedOrigins = [
     'https://yukishirotsubasa.github.io'
   ];
-  const origin = req.headers.origin;
+  const origin = req.headers.origin || '*';
 
   if (allowedOrigins.includes(origin)) {
     res.set('Access-Control-Allow-Origin', origin);
@@ -107,7 +107,7 @@ exports.weatherProxy = async (req, res) => {
 
   res.set('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type');
-  
+
   if (req.method === 'OPTIONS') {
     res.set('Access-Control-Max-Age', '3600');
     res.status(204).send('');
@@ -122,7 +122,7 @@ exports.weatherProxy = async (req, res) => {
         name: 'projects/tripplanner-490708/secrets/weatherapi/versions/latest',
       });
       const apiKey = version.payload.data.toString();
-      
+
       const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${lat},${lng}&dt=${date}`);
       const data = await response.json();
       res.status(200).json(normalizeWeatherAPI(data));
@@ -134,7 +134,7 @@ exports.weatherProxy = async (req, res) => {
     } else if (source === 'meteoblue') {
       const cacheKey = `mb_${parseFloat(lat).toFixed(2)}_${parseFloat(lng).toFixed(2)}`;
       const cacheRef = db.collection('weather_cache').doc(cacheKey);
-      
+
       // 1. Try Cache
       try {
         const doc = await cacheRef.get();
@@ -157,7 +157,7 @@ exports.weatherProxy = async (req, res) => {
       });
       const apiKey = version.payload.data.toString();
       const url = `https://my.meteoblue.com/packages/basic-1h_basic-day?lat=${lat}&lon=${lng}&apikey=${apiKey}&asjson=true&forecast_days=7`;
-      
+
       const response = await fetch(url);
       const data = await response.json();
       if (data.error_message) {
@@ -180,10 +180,10 @@ exports.weatherProxy = async (req, res) => {
     }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ 
-      error: 'Internal Server Error', 
+    res.status(500).json({
+      error: 'Internal Server Error',
       message: err.message,
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
   }
 };
