@@ -41,3 +41,4 @@ jobs:
           max_instances: 1
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
           timeout: 300
+          flags: '--gen2 --trigger-http'
