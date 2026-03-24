@@ -31,7 +31,7 @@ jobs:
       - name: Deploy Cloud Function
         uses: google-github-actions/deploy-cloud-functions@v2
         with:
-          name: weatherProxy
+          name: weatherProxy2
           runtime: nodejs20
           region: us-central1 # Update as needed
           environment: GEN_2
