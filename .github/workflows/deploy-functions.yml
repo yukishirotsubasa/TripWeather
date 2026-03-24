@@ -37,8 +37,10 @@ jobs:
           gen2: true
           source_dir: ./functions
           entry_point: weatherProxy
+          ingress_settings: ALLOW_ALL
           https_trigger_security_level: secure_always
           max_instances: 1
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          service_account: ${{ secrets.FUNCTION_BUILD_SERVICE_ACCOUNT }}
           timeout: 300
           flags: '--gen2 --trigger-http'
+          env_vars: DEPLOYED_VIA=github-actions
